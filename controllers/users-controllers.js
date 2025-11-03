@@ -124,7 +124,7 @@ const login = async (req, res, next) => {
 
   if (!existingUser) {
     const error = new HttpError(
-      "User already exists, could not log you in.",
+      "User doesn't exists, could not log you in.",
       403
     );
     return next(error);
