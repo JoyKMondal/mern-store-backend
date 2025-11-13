@@ -4,6 +4,7 @@
     "DB_PASSWORD": "Googletest",
     "DB_NAME": "ProjectA",
     "JWT_KEY": "very_secret",
-    "SENDGRID_KEY": "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"
+    "SENDGRID_KEY": "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",
+    "NODE_ENV": "development"
   }
 }

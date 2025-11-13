@@ -1,4 +1,5 @@
 const { validationResult } = require("express-validator");
+const { uploadToCloudinary } = require('../middleware/file-upload');
 const mongoose = require("mongoose");
 const fs = require("fs");
 
@@ -76,6 +77,24 @@ const createProduct = async (req, res, next) => {
 
   const { title, author, category, description, stock, price } = req.body;
 
+  let imageUrl;
+  if (req.file) {
+    if (process.env.NODE_ENV === "production") {
+      // Prod: Upload from memory buffer
+      try {
+        imageUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+        console.log("Signup: Cloudinary URL:", imageUrl);
+      } catch (err) {
+        return next(new HttpError("Product Image upload failed", 500));
+      }
+    } else {
+      // Dev: Use local path
+      imageUrl = req.file.path;
+    }
+  } else {
+    return next(new HttpError("No image provided", 422));
+  }
+
   const createdProduct = new Product({
     title,
     author,
@@ -83,7 +102,7 @@ const createProduct = async (req, res, next) => {
     category,
     stock,
     price,
-    imageUrl: req.file.path,
+    imageUrl: imageUrl,
     creator: req.userData.userId,
   });
 
@@ -92,13 +111,11 @@ const createProduct = async (req, res, next) => {
     user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError(
-      "Creating place failed, please try again1",
+      "Creating product failed, please try again!",
       500
     );
     return next(error);
   }
-
-  console.log(user)
 
   if (!user) {
     const error = new HttpError("Could not find user for provided id", 404);
@@ -177,13 +194,37 @@ const updateProduct = async (req, res, next) => {
     return next(error);
   }
 
+  // Image handling
+  let imageUrl = product.imageUrl; // Keep old by default
+  if (req.file) {
+    if (process.env.NODE_ENV === 'production') {
+      // Prod: Upload from buffer
+      try {
+        imageUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+        console.log('Update: Cloudinary URL:', imageUrl);
+      } catch (err) {
+        return next(new HttpError('Image upload failed', 500));
+      }
+    } else {
+      // Dev: Use local path
+      imageUrl = req.file.path;
+      // Optional: Delete old local file
+      if (product.imageUrl) {
+        const oldPath = path.join(__dirname, '..', product.imageUrl);
+        fs.unlink(oldPath, (err) => {
+          if (err) console.log('Delete old file error:', err);
+        });
+      }
+    }
+  }
+
   product.title = title;
   product.description = description;
   product.author = author;
   product.price = price;
   product.category = category;
   product.stock = stock;
-  product.imageUrl = req.file.path;
+  product.imageUrl = imageUrl;
 
   try {
     await product.save();
