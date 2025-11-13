@@ -5,6 +5,9 @@
     "DB_NAME": "ProjectA",
     "JWT_KEY": "very_secret",
     "SENDGRID_KEY": "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",
+    "CLOUDINARY_CLOUD_NAME": "dpagg3cfw",
+    "CLOUDINARY_API_KEY": "897326833842651",
+    "CLOUDINARY_API_SECRET": "WXluNSSbUDDNSdrROrw333hnQlw",
     "NODE_ENV": "development"
   }
 }
